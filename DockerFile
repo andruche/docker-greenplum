@@ -1,0 +1,100 @@
+FROM ubuntu:22.04
+
+SHELL ["/bin/bash", "-c"]
+RUN echo 'alias ll="ls -l"' >> /root/.bashrc
+RUN echo 'export PS1="\[\033[1;36m\][\u@\h \W]\[\033[0;31m\]$\[\033[0;37m\] "' >> /root/.bashrc
+
+#from https://github.com/greenplum-db/gpdb/blob/6.23.1/README.ubuntu.bash:
+RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked \
+    --mount=target=/var/cache/apt,type=cache,sharing=locked \
+    rm -f /etc/apt/apt.conf.d/docker-clean \
+    && apt-get update \
+    && apt-get -y install \
+        bison ccache cmake curl flex git-core gcc g++ inetutils-ping libapr1-dev libbz2-dev \
+        libcurl4-gnutls-dev libevent-dev libkrb5-dev libpam-dev libperl-dev libreadline-dev \
+        libssl-dev libxml2-dev libyaml-dev libzstd-dev locales net-tools ninja-build \
+        openssh-client openssh-server openssl zlib1g-dev \
+        vim wget mc sudo iproute2 \
+        python2.7 python2.7-dev \
+    && export DEBIAN_FRONTEND=noninteractive && apt-get install -y krb5-kdc krb5-admin-server
+
+RUN curl https://bootstrap.pypa.io/pip/2.7/get-pip.py --output /tmp/get-pip.py && python2.7 /tmp/get-pip.py
+RUN pip2.7 install conan psutil
+RUN ln -s /usr/bin/python2.7 /usr/bin/python
+
+#build locale en_US.UTF-8
+RUN sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen && locale-gen
+
+WORKDIR /opt/
+RUN wget https://github.com/greenplum-db/gpdb/archive/refs/tags/6.23.1.zip
+RUN unzip gpdb-6.23.1.zip
+WORKDIR /opt/gpdb-6.23.1
+
+RUN ./configure --disable-orca --with-libxml  --prefix=/usr/local/gpdb
+RUN make -j 4
+RUN make install
+
+# #from https://github.com/DataGrip/docker-env/blob/master/greenplum/6.8/Dockerfile:
+RUN mkdir /data \
+ && mkdir /data/data1 \
+ && mkdir /data/data2 \
+ && mkdir /data/master \
+ && source /usr/local/gpdb/greenplum_path.sh \
+ && cp $GPHOME/docs/cli_help/gpconfigs/gpinitsystem_singlenode /data/ \
+ && sed -i 's/gpdata1/data\/data1/g' /data/gpinitsystem_singlenode \
+ && sed -i 's/gpdata2/data\/data2/g' /data/gpinitsystem_singlenode \
+ && sed -i 's/gpmaster/data\/master/g' /data/gpinitsystem_singlenode
+
+# Create gpadmin user and add the user to the sudoers
+RUN useradd -md /home/gpadmin/ --shell /bin/bash gpadmin \
+ && chown gpadmin -R /data \
+ && echo "source /usr/local/gpdb/greenplum_path.sh" > /home/gpadmin/.bash_profile \
+ && echo 'export PS1="\[\033[1;35m\][\u@\h \W]\[\033[0;31m\]$\[\033[0;37m\] "'  >> /home/gpadmin/.bash_profile \
+ && echo 'export MASTER_DATA_DIRECTORY="/data/master/gpsne-1/"'  >> /home/gpadmin/.bash_profile \
+ && echo 'alias ll="ls -l"'  >> /home/gpadmin/.bash_profile \
+ && chown gpadmin:gpadmin /home/gpadmin/.bash_profile \
+ && su - gpadmin bash -c 'mkdir /home/gpadmin/.ssh' \
+ && echo "gpadmin ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers \
+ && echo "root ALL=NOPASSWD: ALL" >> /etc/sudoers
+
+RUN mkdir /run/sshd
+
+RUN echo "set hlsearch" >> /home/gpadmin/.vimrc
+# from /opt/gpdb-6.23.1/src/tools/docker/ubuntu16_ppa/install_and_start_gpdb.sh:
+RUN su - gpadmin bash -c '\
+    ssh-keygen -f /home/gpadmin/.ssh/id_rsa -t rsa -N "" && \
+    cp /home/gpadmin/.ssh/id_rsa.pub /home/gpadmin/.ssh/authorized_keys && \
+    chmod 600 /home/gpadmin/.ssh/authorized_keys'
+
+# workaround to set host=localhost for master node
+RUN echo "def gethostname(): return 'localhost'" >> /usr/lib/python2.7/socket.py
+RUN mv /usr/bin/hostname{,.bkp} && \
+  echo "echo localhost" > /usr/bin/hostname && \
+  chmod +x /usr/bin/hostname && \
+  echo localhost > /etc/hostname
+
+RUN su - gpadmin bash -c '\
+    cd /data/ && \
+    cd /data/ && \
+    echo "starting sshd ..." && \
+    sudo /etc/init.d/ssh start && \
+    sleep 2 && \
+    ssh -o StrictHostKeyChecking=no localhost ls && \
+    ssh -o StrictHostKeyChecking=no `hostname` ls && \
+    source /home/gpadmin/.bash_profile && \
+    echo localhost > /data/hostlist_singlenode && \
+    sed -i "s/hostname_of_machine/localhost/g" /data/gpinitsystem_singlenode && \
+    echo "gpssh-exkeys ..." && \
+    gpssh-exkeys -f /data/hostlist_singlenode && \
+    echo "gpinitsystem ..." && \
+    gpinitsystem --ignore-warnings -ac gpinitsystem_singlenode && \
+    echo "host all  all 0.0.0.0/0 trust" >> /data/master/gpsne-1/pg_hba.conf && \
+    psql -d postgres -c "alter role gpadmin with password \$\$123456\$\$" && \
+    echo "gpstop ..." && \
+    gpstop -a'
+
+RUN mv /usr/bin/hostname{.bkp,}
+
+ADD entrypoint.sh /
+RUN chmod +x /entrypoint.sh
+CMD ["/entrypoint.sh"]
