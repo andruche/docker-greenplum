@@ -29,6 +29,7 @@ RUN --mount=target=/opt/cache,type=cache,sharing=locked \
     unzip 6.23.1.zip -d /opt/
 
 WORKDIR /opt/gpdb-6.23.1
+RUN echo "6.23.1 build dev" > ./VERSION
 RUN ./configure --disable-orca --with-libxml  --prefix=/usr/local/gpdb
 RUN make -j 4
 RUN make install
