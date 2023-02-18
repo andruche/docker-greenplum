@@ -6,7 +6,7 @@ set -e
 sleep 1
 su - gpadmin bash -c 'gpstart -a'
 
-trap "kill %1 && su - gpadmin bash -c 'gpstop -a -M fast' && END=1" INT TERM
+trap "kill %1; su - gpadmin bash -c 'gpstop -a -M fast' && END=1" INT TERM
 
 tail -f `ls /data/master/gpsne-1/pg_log/gpdb-* | tail -n1` &
 
