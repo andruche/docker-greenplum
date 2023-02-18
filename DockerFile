@@ -51,12 +51,6 @@ RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked \
 
 WORKDIR /opt/
 RUN ln -s /usr/bin/python2.7 /usr/bin/python
-RUN --mount=target=/opt/cache,type=cache,sharing=locked \
-    cd /opt/cache && \
-    [ -f get-pip.py ] || wget https://bootstrap.pypa.io/pip/2.7/get-pip.py && \
-    python2.7 get-pip.py
-RUN pip2.7 install conan
-#RUN pip2.7 install psutil  - need gcc, just copy from builder
 COPY --from=builder /usr/local/lib/python2.7/dist-packages/psutil /usr/local/lib/python2.7/dist-packages/psutil
 
 #build locale en_US.UTF-8
