@@ -4,7 +4,7 @@ SHELL ["/bin/bash", "-c"]
 RUN echo 'alias ll="ls -l"' >> /root/.bashrc
 RUN echo 'export PS1="\[\033[1;36m\][\u@\h \W]\[\033[0;31m\]$\[\033[0;37m\] "' >> /root/.bashrc
 
-#from https://github.com/greenplum-db/gpdb/blob/6.23.1/README.ubuntu.bash:
+#from https://github.com/greenplum-db/gpdb/blob/6.24.1/README.ubuntu.bash:
 RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked \
     --mount=target=/var/cache/apt,type=cache,sharing=locked \
     rm -f /etc/apt/apt.conf.d/docker-clean \
@@ -25,11 +25,11 @@ RUN ln -s /usr/bin/python2.7 /usr/bin/python
 WORKDIR /opt/
 RUN --mount=target=/opt/cache,type=cache,sharing=locked \
     cd /opt/cache && \
-    [ -f 6.23.1.zip ] || wget https://github.com/greenplum-db/gpdb/archive/refs/tags/6.23.1.zip && \
-    unzip 6.23.1.zip -d /opt/
+    [ -f 6.24.1.zip ] || wget https://github.com/greenplum-db/gpdb/archive/refs/tags/6.24.1.zip && \
+    unzip 6.24.1.zip -d /opt/
 
-WORKDIR /opt/gpdb-6.23.1
-RUN echo "6.23.1 build dev" > ./VERSION
+WORKDIR /opt/gpdb-6.24.1
+RUN echo "6.24.1 build dev" > ./VERSION
 RUN ./configure --disable-orca --with-libxml  --prefix=/usr/local/gpdb
 RUN make -j 4
 RUN make install
@@ -58,8 +58,8 @@ COPY --from=builder /usr/local/lib/python2.7/dist-packages/psutil /usr/local/lib
 RUN sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen && locale-gen
 
 
-RUN --mount=from=builder,type=bind,source=/opt/gpdb-6.23.1,target=/opt/gpdb-6.23.1,readwrite \
-    cd /opt/gpdb-6.23.1 && make install
+RUN --mount=from=builder,type=bind,source=/opt/gpdb-6.24.1,target=/opt/gpdb-6.24.1,readwrite \
+    cd /opt/gpdb-6.24.1 && make install
 
 
 # #from https://github.com/DataGrip/docker-env/blob/master/greenplum/6.8/Dockerfile:
