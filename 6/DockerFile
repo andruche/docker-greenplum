@@ -13,7 +13,7 @@ RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked \
         bison ccache cmake curl flex git-core gcc g++ inetutils-ping libapr1-dev libbz2-dev \
         libcurl4-gnutls-dev libevent-dev libkrb5-dev libpam-dev libperl-dev libreadline-dev \
         libssl-dev libxml2-dev libyaml-dev libzstd-dev locales net-tools ninja-build \
-        openssh-client openssh-server openssl zlib1g-dev \
+        openssh-client openssh-server openssl zlib1g-dev libldap-dev libossp-uuid-dev \
         vim wget mc sudo iproute2 \
         python2.7 python2.7-dev \
     && export DEBIAN_FRONTEND=noninteractive && apt-get install -y krb5-kdc krb5-admin-server
@@ -21,6 +21,18 @@ RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked \
 RUN curl https://bootstrap.pypa.io/pip/2.7/get-pip.py --output /tmp/get-pip.py && python2.7 /tmp/get-pip.py
 RUN pip2.7 install conan psutil
 RUN ln -s /usr/bin/python2.7 /usr/bin/python
+
+# Install pathed version of xerces-c https://github.com/greenplum-db/gp-xerces
+WORKDIR /opt/
+RUN --mount=target=/opt/cache,type=cache,sharing=locked \
+    cd /opt/cache && \
+    [ -f v3.1.2-p1.zip ] || wget https://github.com/greenplum-db/gp-xerces/archive/refs/tags/v3.1.2-p1.zip && \
+    unzip v3.1.2-p1.zip -d /opt/
+
+WORKDIR /opt/gp-xerces-3.1.2-p1
+RUN mkdir build
+WORKDIR /opt/gp-xerces-3.1.2-p1/build
+RUN ../configure --prefix=/usr/local && make && make install
 
 WORKDIR /opt/
 RUN --mount=target=/opt/cache,type=cache,sharing=locked \
@@ -30,7 +42,7 @@ RUN --mount=target=/opt/cache,type=cache,sharing=locked \
 
 WORKDIR /opt/gpdb-6.24.1
 RUN echo "6.24.1 build dev" > ./VERSION
-RUN ./configure --disable-orca --with-libxml  --prefix=/usr/local/gpdb
+RUN ./configure --with-orca --with-libxml --with-uuid=ossp --with-ldap --with-openssl --enable-gpfdist --with-gssapi --with-zstd --prefix=/usr/local/gpdb
 RUN make -j 4
 RUN make install
 # -----------------------------------------------------------------------------
@@ -48,7 +60,7 @@ RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked \
     apt-get update && \
     apt-get -y install \
       make python2.7 openssh-client openssh-server openssl sudo iproute2 \
-      net-tools less inetutils-ping locales libcurl3-gnutls
+      net-tools less inetutils-ping locales libcurl3-gnutls g++ libicu-dev libcurl4-gnutls-dev
 
 WORKDIR /opt/
 RUN ln -s /usr/bin/python2.7 /usr/bin/python
@@ -56,6 +68,10 @@ COPY --from=builder /usr/local/lib/python2.7/dist-packages/psutil /usr/local/lib
 
 #build locale en_US.UTF-8
 RUN sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen && locale-gen
+
+RUN --mount=from=builder,type=bind,source=/opt/gp-xerces-3.1.2-p1,target=/opt/gp-xerces-3.1.2-p1,readwrite \
+    cd /opt/gp-xerces-3.1.2-p1/build && make install
+RUN echo /usr/local/lib >> /etc/ld.so.conf.d/custom_libs.conf && ldconfig
 
 
 RUN --mount=from=builder,type=bind,source=/opt/gpdb-6.24.1,target=/opt/gpdb-6.24.1,readwrite \
@@ -115,7 +131,7 @@ RUN su - gpadmin bash -c '\
     echo "gpssh-exkeys ..." && \
     gpssh-exkeys -f /data/hostlist_singlenode && \
     echo "gpinitsystem ..." && \
-    gpinitsystem --ignore-warnings -ac gpinitsystem_singlenode && \
+    gpinitsystem --ignore-warnings -ac gpinitsystem_singlenode  && \
     echo "host all  all 0.0.0.0/0 trust" >> /data/master/gpsne-1/pg_hba.conf && \
     psql -d postgres -c "alter role gpadmin with password \$\$123456\$\$" && \
     echo "gpstop ..." && \
