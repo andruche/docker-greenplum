@@ -23,9 +23,11 @@ $ docker push andruche/greenplum:7.0.0-b2-slim-amd64
 
 ## Build manifests
 ```
+$ docker manifest rm andruche/greenplum:6.24.1
 $ docker manifest create andruche/greenplum:6.24.1 --amend andruche/greenplum:6.24.1-slim-arm64 --amend andruche/greenplum:6.24.1-slim-amd64
 $ docker manifest push andruche/greenplum:6.24.1
 
+$ docker manifest rm andruche/greenplum:7.0.0-b2
 $ docker manifest create andruche/greenplum:7.0.0-b2 --amend andruche/greenplum:7.0.0-b2-slim-arm64 --amend andruche/greenplum:7.0.0-b2-slim-amd64
 $ docker manifest push andruche/greenplum:7.0.0-b2
 ```
