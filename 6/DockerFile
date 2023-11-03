@@ -30,9 +30,7 @@ RUN --mount=target=/opt/cache,type=cache,sharing=locked \
     unzip v3.1.2-p1.zip -d /opt/
 
 WORKDIR /opt/gp-xerces-3.1.2-p1
-RUN mkdir build
-WORKDIR /opt/gp-xerces-3.1.2-p1/build
-RUN ../configure --prefix=/usr/local && make && make install
+RUN ./configure --prefix=/usr/local && make && make install
 
 WORKDIR /opt/
 RUN --mount=target=/opt/cache,type=cache,sharing=locked \
@@ -61,7 +59,7 @@ RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked \
     apt-get update && \
     apt-get -y install \
       make python2.7 openssh-client openssh-server openssl sudo iproute2 \
-      net-tools less inetutils-ping locales libcurl3-gnutls g++ libicu-dev libcurl4-gnutls-dev
+      net-tools less inetutils-ping locales libcurl3-gnutls
 
 WORKDIR /opt/
 RUN ln -s /usr/bin/python2.7 /usr/bin/python
@@ -70,8 +68,9 @@ COPY --from=builder /usr/local/lib/python2.7/dist-packages/psutil /usr/local/lib
 #build locale en_US.UTF-8
 RUN sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen && locale-gen
 
-RUN --mount=from=builder,type=bind,source=/opt/gp-xerces-3.1.2-p1,target=/opt/gp-xerces-3.1.2-p1,readwrite \
-    cd /opt/gp-xerces-3.1.2-p1/build && make install
+RUN --mount=from=builder,source=/usr/local/lib,target=/opt/builder_local_lib/ \
+    cd /opt/builder_local_lib/ && \
+    cp libxerces-c-3.1.so libxerces-c.a libxerces-c.la libxerces-c.so /usr/local/lib/
 RUN echo /usr/local/lib >> /etc/ld.so.conf.d/custom_libs.conf && ldconfig
 
 
