@@ -30,7 +30,7 @@ RUN --mount=target=/opt/cache,type=cache,sharing=locked \
     unzip v3.1.2-p1.zip -d /opt/
 
 WORKDIR /opt/gp-xerces-3.1.2-p1
-RUN ./configure --prefix=/usr/local && make && make install
+RUN ./configure --prefix=/usr/local && make -j 4 && make install
 
 WORKDIR /opt/
 RUN --mount=target=/opt/cache,type=cache,sharing=locked \
@@ -44,6 +44,10 @@ RUN ./configure --with-orca --with-libxml --with-uuid=ossp --with-ldap --with-op
       --enable-gpfdist --with-gssapi --with-zstd --prefix=/usr/local/gpdb
 RUN make -j 4
 RUN make install
+
+WORKDIR /opt/
+RUN wget https://github.com/comagic/greenplum_bitmap_bucket/archive/refs/heads/main.zip && \
+    unzip main.zip -d /opt/ && mv greenplum_bitmap_bucket-main bitmap_bucket
 # -----------------------------------------------------------------------------
 
 
@@ -77,6 +81,8 @@ RUN echo /usr/local/lib >> /etc/ld.so.conf.d/custom_libs.conf && ldconfig
 RUN --mount=from=builder,type=bind,source=/opt/gpdb-6.25.3,target=/opt/gpdb-6.25.3,readwrite \
     cd /opt/gpdb-6.25.3 && make install
 
+RUN --mount=from=builder,source=/opt/bitmap_bucket,target=/opt/bitmap_bucket,readwrite \
+     cd /opt/bitmap_bucket && make install
 
 #from https://github.com/DataGrip/docker-env/blob/master/greenplum/6.8/Dockerfile:
 RUN mkdir /data \
