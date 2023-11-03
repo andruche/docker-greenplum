@@ -4,7 +4,7 @@ SHELL ["/bin/bash", "-c"]
 RUN echo 'alias ll="ls -l"' >> /root/.bashrc
 RUN echo 'export PS1="\[\033[1;36m\][\u@\h \W]\[\033[0;31m\]$\[\033[0;37m\] "' >> /root/.bashrc
 
-#from https://github.com/greenplum-db/gpdb/blob/7.0.0-beta.2/README.Ubuntu.bash:
+#from https://github.com/greenplum-db/gpdb/blob/7.0.0/README.Ubuntu.bash:
 RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked \
     --mount=target=/var/cache/apt,type=cache,sharing=locked \
     rm -f /etc/apt/apt.conf.d/docker-clean \
@@ -21,12 +21,14 @@ RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked \
 WORKDIR /opt/
 RUN --mount=target=/opt/cache,type=cache,sharing=locked \
     cd /opt/cache && \
-    [ -f 7.0.0-beta.2.zip ] || wget https://github.com/greenplum-db/gpdb/archive/refs/tags/7.0.0-beta.2.zip && \
-    unzip 7.0.0-beta.2.zip -d /opt/
+    [ -f 7.0.0.zip ] || wget https://github.com/greenplum-db/gpdb/archive/refs/tags/7.0.0.zip && \
+    unzip 7.0.0.zip -d /opt/
 
-WORKDIR /opt/gpdb-7.0.0-beta.2/
+WORKDIR /opt/gpdb-7.0.0/
 RUN echo "7.0.0-b2 build dev" > ./VERSION
-RUN ./configure --disable-orca --with-libxml  --prefix=/usr/local/gpdb
+# RUN ./configure --disable-orca --with-libxml  --prefix=/usr/local/gpdb
+RUN ./configure --with-perl --with-python --with-libxml --enable-gpfdist --with-gssapi \
+    --with-zstd --prefix=/usr/local/gpdb
 RUN make -j 4
 RUN make install
 # -----------------------------------------------------------------------------
@@ -44,15 +46,16 @@ RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked \
     apt-get update && \
     apt-get -y install \
       make openssh-client openssh-server openssl sudo iproute2 rsync \
-      net-tools less inetutils-ping locales libcurl3-gnutls python3-psutil python3-pygresql
+      net-tools less inetutils-ping locales libcurl3-gnutls python3-psutil python3-pygresql \
+      python3-psycopg2 libxerces-c3.2
 
 #build locale en_US.UTF-8
 RUN sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen && locale-gen
 
 
-RUN --mount=from=builder,type=bind,source=/opt/gpdb-7.0.0-beta.2,target=/opt/gpdb-7.0.0-beta.2,readwrite \
+RUN --mount=from=builder,type=bind,source=/opt/gpdb-7.0.0,target=/opt/gpdb-7.0.0,readwrite \
     --mount=from=builder,type=bind,source=/usr/share/perl/5.34.0,target=/usr/share/perl/5.34,readwrite \
-    cd /opt/gpdb-7.0.0-beta.2 && make install
+    cd /opt/gpdb-7.0.0 && make install
 
 
 # #from https://github.com/DataGrip/docker-env/blob/master/greenplum/6.8/Dockerfile:

@@ -4,7 +4,7 @@ SHELL ["/bin/bash", "-c"]
 RUN echo 'alias ll="ls -l"' >> /root/.bashrc
 RUN echo 'export PS1="\[\033[1;36m\][\u@\h \W]\[\033[0;31m\]$\[\033[0;37m\] "' >> /root/.bashrc
 
-#from https://github.com/greenplum-db/gpdb/blob/6.24.1/README.ubuntu.bash:
+#from https://github.com/greenplum-db/gpdb/blob/6.25.3/README.ubuntu.bash:
 RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked \
     --mount=target=/var/cache/apt,type=cache,sharing=locked \
     rm -f /etc/apt/apt.conf.d/docker-clean \
@@ -19,7 +19,7 @@ RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked \
     && export DEBIAN_FRONTEND=noninteractive && apt-get install -y krb5-kdc krb5-admin-server
 
 RUN curl https://bootstrap.pypa.io/pip/2.7/get-pip.py --output /tmp/get-pip.py && python2.7 /tmp/get-pip.py
-RUN pip2.7 install conan psutil
+RUN pip2.7 install PyYAML==5.3.1 conan==1.48.2 psutil==5.9.6
 RUN ln -s /usr/bin/python2.7 /usr/bin/python
 
 # Install pathed version of xerces-c https://github.com/greenplum-db/gp-xerces
@@ -37,12 +37,13 @@ RUN ../configure --prefix=/usr/local && make && make install
 WORKDIR /opt/
 RUN --mount=target=/opt/cache,type=cache,sharing=locked \
     cd /opt/cache && \
-    [ -f 6.24.1.zip ] || wget https://github.com/greenplum-db/gpdb/archive/refs/tags/6.24.1.zip && \
-    unzip 6.24.1.zip -d /opt/
+    [ -f 6.25.3.zip ] || wget https://github.com/greenplum-db/gpdb/archive/refs/tags/6.25.3.zip && \
+    unzip 6.25.3.zip -d /opt/
 
-WORKDIR /opt/gpdb-6.24.1
-RUN echo "6.24.1 build dev" > ./VERSION
-RUN ./configure --with-orca --with-libxml --with-uuid=ossp --with-ldap --with-openssl --enable-gpfdist --with-gssapi --with-zstd --prefix=/usr/local/gpdb
+WORKDIR /opt/gpdb-6.25.3
+RUN echo "6.25.3 build dev" > ./VERSION
+RUN ./configure --with-orca --with-libxml --with-uuid=ossp --with-ldap --with-openssl \
+      --enable-gpfdist --with-gssapi --with-zstd --prefix=/usr/local/gpdb
 RUN make -j 4
 RUN make install
 # -----------------------------------------------------------------------------
@@ -74,11 +75,11 @@ RUN --mount=from=builder,type=bind,source=/opt/gp-xerces-3.1.2-p1,target=/opt/gp
 RUN echo /usr/local/lib >> /etc/ld.so.conf.d/custom_libs.conf && ldconfig
 
 
-RUN --mount=from=builder,type=bind,source=/opt/gpdb-6.24.1,target=/opt/gpdb-6.24.1,readwrite \
-    cd /opt/gpdb-6.24.1 && make install
+RUN --mount=from=builder,type=bind,source=/opt/gpdb-6.25.3,target=/opt/gpdb-6.25.3,readwrite \
+    cd /opt/gpdb-6.25.3 && make install
 
 
-# #from https://github.com/DataGrip/docker-env/blob/master/greenplum/6.8/Dockerfile:
+#from https://github.com/DataGrip/docker-env/blob/master/greenplum/6.8/Dockerfile:
 RUN mkdir /data \
  && mkdir /data/data1 \
  && mkdir /data/data2 \
