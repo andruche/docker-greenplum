@@ -4,7 +4,7 @@ SHELL ["/bin/bash", "-c"]
 RUN echo 'alias ll="ls -l"' >> /root/.bashrc
 RUN echo 'export PS1="\[\033[1;36m\][\u@\h \W]\[\033[0;31m\]$\[\033[0;37m\] "' >> /root/.bashrc
 
-#from https://github.com/greenplum-db/gpdb/blob/7.0.0/README.Ubuntu.bash:
+#from https://github.com/greenplum-db/gpdb-archive/blob/0a7a3566873325aca1789ae6f818c80f17a9402d/README.Ubuntu.bash:
 RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked \
     --mount=target=/var/cache/apt,type=cache,sharing=locked \
     rm -f /etc/apt/apt.conf.d/docker-clean \
@@ -21,8 +21,9 @@ RUN --mount=target=/var/lib/apt/lists,type=cache,sharing=locked \
 WORKDIR /opt/
 RUN --mount=target=/opt/cache,type=cache,sharing=locked \
     cd /opt/cache && \
-    [ -f 7.0.0.zip ] || wget https://github.com/greenplum-db/gpdb/archive/refs/tags/7.0.0.zip && \
-    unzip 7.0.0.zip -d /opt/
+    [ -f gpdb-7.0.0.zip ] || wget https://github.com/greenplum-db/gpdb-archive/archive/0a7a3566873325aca1789ae6f818c80f17a9402d.zip -O gpdb-7.0.0.zip && \
+    unzip gpdb-7.0.0.zip -d /opt/ && \
+    mv /opt/gpdb-archive-0a7a3566873325aca1789ae6f818c80f17a9402d /opt/gpdb-7.0.0
 
 WORKDIR /opt/gpdb-7.0.0/
 RUN echo "7.0.0-b2 build dev" > ./VERSION
@@ -84,7 +85,7 @@ RUN useradd -md /home/gpadmin/ --shell /bin/bash gpadmin \
 RUN mkdir /run/sshd
 RUN echo "set hlsearch" >> /home/gpadmin/.vimrc
 
-# from https://github.com/greenplum-db/gpdb/blob/6.21.1/src/tools/docker/ubuntu16_ppa/install_and_start_gpdb.sh:
+# from https://github.com/greenplum-db/gpdb-archive/blob/0a7a3566873325aca1789ae6f818c80f17a9402d/src/tools/docker/ubuntu16_ppa/install_and_start_gpdb.sh:
 RUN su - gpadmin bash -c '\
     ssh-keygen -f /home/gpadmin/.ssh/id_rsa -t rsa -N "" && \
     cp /home/gpadmin/.ssh/id_rsa.pub /home/gpadmin/.ssh/authorized_keys && \
