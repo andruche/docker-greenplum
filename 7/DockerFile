@@ -113,6 +113,7 @@ RUN su - gpadmin bash -c '\
     echo "gpinitsystem ..." && \
     gpinitsystem -ac gpinitsystem_singlenode && \
     echo "host all  all 0.0.0.0/0 trust" >> /data/coordinator/gpsne-1/pg_hba.conf && \
+    echo "host all  all ::0/0 trust" >> /data/coordinator/gpsne-1/pg_hba.conf && \
     psql -d postgres -c "alter role gpadmin with password \$\$123456\$\$" && \
     echo "gpstop ..." && \
     gpstop -a'
