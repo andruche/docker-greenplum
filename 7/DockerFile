@@ -26,7 +26,7 @@ RUN --mount=target=/opt/cache,type=cache,sharing=locked \
     mv /opt/gpdb-archive-0a7a3566873325aca1789ae6f818c80f17a9402d /opt/gpdb-7.0.0
 
 WORKDIR /opt/gpdb-7.0.0/
-RUN echo "7.0.0-b2 build dev" > ./VERSION
+RUN echo "7.0.0 build dev" > ./VERSION
 # RUN ./configure --disable-orca --with-libxml  --prefix=/usr/local/gpdb
 RUN ./configure --with-perl --with-python --with-libxml --enable-gpfdist --with-gssapi \
     --with-zstd --prefix=/usr/local/gpdb
