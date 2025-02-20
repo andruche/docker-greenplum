@@ -37,3 +37,8 @@ $ docker manifest push andruche/greenplum:7.0.0
 $ docker run --name greenplum -p 5432:5432 -d andruche/greenplum:6
 $ docker run --name greenplum -p 5432:5432 -d andruche/greenplum:7
 ```
+
+You can use options below to connect to GP instance:
+* `database=postgres`
+* `user=gpadmin`
+* `password=123456`
