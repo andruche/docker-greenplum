@@ -6,43 +6,126 @@ Difference from datagrip version:
 * Correct stop
 * Printing greenplum logs to container logs
 
-GPORCA optimizer temporarily disabled (some compilation problems)
+## Usage
+```bash
+$ docker run --name greenplum -p 5432:5432 -d andruche/greenplum:7
+$ docker run --name greenplum -p 5432:5432 -d andruche/greenplum:7-4seg
+$ docker run --name greenplum -p 5432:5432 -d andruche/greenplum:7-8seg
+$ docker run --name greenplum -p 5432:5432 -d andruche/greenplum:6
+$ docker run --name greenplum -p 5432:5432 -d andruche/greenplum:6-4seg
+$ docker run --name greenplum -p 5432:5432 -d andruche/greenplum:6-8seg
+```
 
 ## Build images
 
 The build process supports a `SEGMENT_COUNT` build argument to configure the number of primary segments (default: 2, range: 1-16).
 
 ```bash
-# Build with default 2 segments
-$ docker buildx build --platform linux/arm64/v8 -f 6/DockerFile -t andruche/greenplum:6.25.3-slim-arm64 .
-$ docker push andruche/greenplum:6.25.3-slim-arm64
-$ docker buildx build --platform linux/amd64 -f 6/DockerFile -t andruche/greenplum:6.25.3-slim-amd64 .
-$ docker push andruche/greenplum:6.25.3-slim-amd64
+# ------------------------------ 6 ------------------------------
+# 2 segments (default)
+$ docker buildx build --platform linux/arm64/v8 -f 6/DockerFile -t andruche/greenplum:6.25.3-2seg-slim-arm64 .
+$ docker push andruche/greenplum:6.25.3-2seg-slim-arm64
 
-# Build with custom segment count (e.g., 4 segments)
-$ docker buildx build --platform linux/arm64/v8 -f 6/DockerFile --build-arg SEGMENT_COUNT=4 -t andruche/greenplum:6.25.3-slim-arm64 .
+$ docker buildx build --platform linux/amd64 -f 6/DockerFile -t andruche/greenplum:6.25.3-2seg-slim-amd64 .
+$ docker push andruche/greenplum:6.25.3-2seg-slim-amd64
 
-$ docker buildx build --platform linux/arm64/v8 -f 7/DockerFile -t andruche/greenplum:7.0.0-slim-arm64 .
-$ docker push andruche/greenplum:7.0.0-slim-arm64
-$ docker buildx build --platform linux/amd64 -f 7/DockerFile -t andruche/greenplum:7.0.0-slim-amd64 .
-$ docker push andruche/greenplum:7.0.0-slim-amd64
+# 4 segments
+$ docker buildx build --platform linux/arm64/v8 -f 6/DockerFile --build-arg SEGMENT_COUNT=4 -t andruche/greenplum:6.25.3-4seg-slim-arm64 .
+$ docker push andruche/greenplum:6.25.3-4seg-slim-arm64
+
+$ docker buildx build --platform linux/amd64 -f 6/DockerFile --build-arg SEGMENT_COUNT=4 -t andruche/greenplum:6.25.3-4seg-slim-amd64 .
+$ docker push andruche/greenplum:6.25.3-4seg-slim-amd64
+
+# 8 segments
+$ docker buildx build --platform linux/arm64/v8 -f 6/DockerFile --build-arg SEGMENT_COUNT=8 -t andruche/greenplum:6.25.3-8seg-slim-arm64 .
+$ docker push andruche/greenplum:6.25.3-8seg-slim-arm64
+
+$ docker buildx build --platform linux/amd64 -f 6/DockerFile --build-arg SEGMENT_COUNT=8 -t andruche/greenplum:6.25.3-8seg-slim-amd64 .
+$ docker push andruche/greenplum:6.25.3-8seg-slim-amd64
+
+# ------------------------------ 7 ------------------------------
+# 2 segments (default)
+$ docker buildx build --platform linux/arm64/v8 -f 7/DockerFile -t andruche/greenplum:7.0.0-2seg-slim-arm64 .
+$ docker push andruche/greenplum:7.0.0-2seg-slim-arm64
+
+$ docker buildx build --platform linux/amd64 -f 7/DockerFile -t andruche/greenplum:7.0.0-2seg-slim-amd64 .
+$ docker push andruche/greenplum:7.0.0-2seg-slim-amd64
+
+# 4 segments
+$ docker buildx build --platform linux/arm64/v8 -f 7/DockerFile --build-arg SEGMENT_COUNT=4 -t andruche/greenplum:7.0.0-4seg-slim-arm64 .
+$ docker push andruche/greenplum:7.0.0-4seg-slim-arm64
+
+$ docker buildx build --platform linux/amd64 -f 7/DockerFile --build-arg SEGMENT_COUNT=4 -t andruche/greenplum:7.0.0-4seg-slim-amd64 .
+$ docker push andruche/greenplum:7.0.0-4seg-slim-amd64
+
+# 8 segments
+$ docker buildx build --platform linux/arm64/v8 -f 7/DockerFile --build-arg SEGMENT_COUNT=8 -t andruche/greenplum:7.0.0-8seg-slim-arm64 .
+$ docker push andruche/greenplum:7.0.0-8seg-slim-arm64
+
+$ docker buildx build --platform linux/amd64 -f 7/DockerFile --build-arg SEGMENT_COUNT=8 -t andruche/greenplum:7.0.0-8seg-slim-amd64 .
+$ docker push andruche/greenplum:7.0.0-8seg-slim-amd64
+
 ```
 
 ## Build manifests
-```
+```bash
+# For backward compatibility of names
 $ docker manifest rm andruche/greenplum:6.25.3
-$ docker manifest create andruche/greenplum:6.25.3 --amend andruche/greenplum:6.25.3-slim-arm64 --amend andruche/greenplum:6.25.3-slim-amd64
+$ docker manifest create andruche/greenplum:6.25.3 --amend andruche/greenplum:6.25.3-2seg-slim-arm64 --amend andruche/greenplum:6.25.3-2seg-slim-amd64
 $ docker manifest push andruche/greenplum:6.25.3
 
 $ docker manifest rm andruche/greenplum:7.0.0
-$ docker manifest create andruche/greenplum:7.0.0 --amend andruche/greenplum:7.0.0-slim-arm64 --amend andruche/greenplum:7.0.0-slim-amd64
+$ docker manifest create andruche/greenplum:7.0.0 --amend andruche/greenplum:7.0.0-2seg-slim-arm64 --amend andruche/greenplum:7.0.0-2seg-slim-amd64
 $ docker manifest push andruche/greenplum:7.0.0
-```
 
-## Usage
-```bash
-$ docker run --name greenplum -p 5432:5432 -d andruche/greenplum:6
-$ docker run --name greenplum -p 5432:5432 -d andruche/greenplum:7
+$ docker manifest rm andruche/greenplum:6.25.3-slim-arm64
+$ docker manifest create andruche/greenplum:6.25.3-slim-arm64 --amend andruche/greenplum:6.25.3-2seg-slim-arm64
+$ docker manifest push andruche/greenplum:6.25.3-slim-arm64
+
+$ docker manifest rm andruche/greenplum:6.25.3-slim-amd64
+$ docker manifest create andruche/greenplum:6.25.3-slim-amd64 --amend andruche/greenplum:6.25.3-2seg-slim-amd64
+$ docker manifest push andruche/greenplum:6.25.3-slim-amd64
+
+$ docker manifest rm andruche/greenplum:7.0.0-slim-arm64
+$ docker manifest create andruche/greenplum:7.0.0-slim-arm64 --amend andruche/greenplum:7.0.0-2seg-slim-arm64
+$ docker manifest push andruche/greenplum:7.0.0-slim-arm64
+
+$ docker manifest rm andruche/greenplum:7.0.0-slim-amd64
+$ docker manifest create andruche/greenplum:7.0.0-slim-amd64 --amend andruche/greenplum:7.0.0-2seg-slim-amd64
+$ docker manifest push andruche/greenplum:7.0.0-slim-amd64
+
+# shortcut names
+$ docker manifest rm andruche/greenplum:6-8seg
+$ docker manifest create andruche/greenplum:6-8seg --amend andruche/greenplum:6.25.3-8seg-slim-arm64 --amend andruche/greenplum:6.25.3-8seg-slim-amd64
+$ docker manifest push andruche/greenplum:6-8seg
+
+$ docker manifest rm andruche/greenplum:7-8seg
+$ docker manifest create andruche/greenplum:7-8seg --amend andruche/greenplum:7.0.0-8seg-slim-arm64 --amend andruche/greenplum:7.0.0-8seg-slim-amd64
+$ docker manifest push andruche/greenplum:7-8seg
+
+$ docker manifest rm andruche/greenplum:6-4seg
+$ docker manifest create andruche/greenplum:6-4seg --amend andruche/greenplum:6.25.3-4seg-slim-arm64 --amend andruche/greenplum:6.25.3-4seg-slim-amd64
+$ docker manifest push andruche/greenplum:6-4seg
+
+$ docker manifest rm andruche/greenplum:7-4seg
+$ docker manifest create andruche/greenplum:7-4seg --amend andruche/greenplum:7.0.0-4seg-slim-arm64 --amend andruche/greenplum:7.0.0-4seg-slim-amd64
+$ docker manifest push andruche/greenplum:7-4seg
+
+$ docker manifest rm andruche/greenplum:6-2seg
+$ docker manifest create andruche/greenplum:6-2seg --amend andruche/greenplum:6.25.3-2seg-slim-arm64 --amend andruche/greenplum:6.25.3-2seg-slim-amd64
+$ docker manifest push andruche/greenplum:6-2seg
+
+$ docker manifest rm andruche/greenplum:7-2seg
+$ docker manifest create andruche/greenplum:7-2seg --amend andruche/greenplum:7.0.0-2seg-slim-arm64 --amend andruche/greenplum:7.0.0-2seg-slim-amd64
+$ docker manifest push andruche/greenplum:7-2seg
+
+$ docker manifest rm andruche/greenplum:6
+$ docker manifest create andruche/greenplum:6 --amend andruche/greenplum:6.25.3-2seg-slim-arm64 --amend andruche/greenplum:6.25.3-2seg-slim-amd64
+$ docker manifest push andruche/greenplum:6
+
+$ docker manifest rm andruche/greenplum:7
+$ docker manifest create andruche/greenplum:7 --amend andruche/greenplum:7.0.0-2seg-slim-arm64 --amend andruche/greenplum:7.0.0-2seg-slim-amd64
+$ docker manifest push andruche/greenplum:7
 ```
 
 ## Configuring Segment Count
