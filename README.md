@@ -8,12 +8,12 @@ Difference from datagrip version:
 
 ## Usage
 ```bash
-$ docker run --name greenplum -p 5432:5432 -d andruche/greenplum:7
-$ docker run --name greenplum -p 5432:5432 -d andruche/greenplum:7-4seg
-$ docker run --name greenplum -p 5432:5432 -d andruche/greenplum:7-8seg
-$ docker run --name greenplum -p 5432:5432 -d andruche/greenplum:6
-$ docker run --name greenplum -p 5432:5432 -d andruche/greenplum:6-4seg
-$ docker run --name greenplum -p 5432:5432 -d andruche/greenplum:6-8seg
+$ docker run --name gp7 -p 5432:5432 -d andruche/greenplum:7
+$ docker run --name gp7 -p 5432:5432 -d andruche/greenplum:7-4seg
+$ docker run --name gp7 -p 5432:5432 -d andruche/greenplum:7-8seg
+$ docker run --name gp6 -p 5432:5432 -d andruche/greenplum:6
+$ docker run --name gp6 -p 5432:5432 -d andruche/greenplum:6-4seg
+$ docker run --name gp6 -p 5432:5432 -d andruche/greenplum:6-8seg
 ```
 
 ## Build images
